@@ -5,7 +5,7 @@
 //首先还是要引入依赖，这回因为需要工具栏和保存代码片段，所以我们需要这两个东西
 const { Plugin } = require("siyuan");
 const clientApi = require("siyuan");
-let 核心api
+let 核心api;
 class quickSnippets extends Plugin {
   onload() {
     this.selfURL = `/plugins/${this.constructor.name}`;
@@ -17,18 +17,18 @@ class quickSnippets extends Plugin {
       callback: this.点击回调函数,
     });
   }
-  onunload(){
-    this.topBarElement.remove()
+  onunload() {
+    this.topBarElement.remove();
   }
   点击回调函数 = async (event) => {
-    const menu = new clientApi.Menu("topBarSample", () => {
-        
-    });
-    核心api =(await import(`${this.selfURL}/pollyfills/kernelApi.js`))['default']
+    const menu = new clientApi.Menu("topBarSample", () => {});
+    核心api = (await import(`${this.selfURL}/pollyfills/kernelApi.js`))[
+      "default"
+    ];
     const rect = this.topBarElement.getBoundingClientRect();
     let 当前代码片段 = await 核心api.getSnippet({ type: "all", enabled: 2 });
     let 旧代码片段 = JSON.parse(JSON.stringify(当前代码片段));
-    当前代码片段.snippets.forEach((item) => {
+    当前代码片段.snippets.forEach((item, index) => {
       if (item.id) {
         let element = document.createElement("button");
         element.setAttribute("class", "b3-menu__item");
@@ -55,10 +55,7 @@ class quickSnippets extends Plugin {
           } else {
             href = `${window.location.href
               .split("?")[0]
-              .replace(
-                "/stage/build/app/",
-                "/stage/build/desktop/"
-              )}?id=${id}`;
+              .replace("/stage/build/app/", "/stage/build/desktop/")}?id=${id}`;
           }
           spanText = `<div style="font-size:85%;color:var(--b3-theme-on-surface);width:60px;display:inline-block">${type}</div>
                   <a href='${href}'>${item.name}</a>`;
@@ -70,6 +67,11 @@ class quickSnippets extends Plugin {
                           ${spanText}
                           </div>
                           <span class="fn__space"></span>
+                          <span aria-label="删除" class="b3-tooltips b3-tooltips__sw block__icon block__icon--show" data-custom-action='remove'>
+                              <svg><use xlink:href="#iconTrashcan"></use></svg>
+                          </span>
+                          <span class="fn__space"></span>
+
                               <input style="box-sizing: border-box"  class="b3-switch fn__flex-center"  type="checkbox" ${
                                 item.enabled ? "checked" : ""
                               }>
@@ -77,9 +79,33 @@ class quickSnippets extends Plugin {
         element.setAttribute("data-type", type);
         element.setAttribute("data-id", id);
         //挂上事件，让菜单项里面的开关可以点击
+        element.querySelector('[data-custom-action="remove"]').addEventListener(
+          "click",(event)=>{
+            let 用户确认结果=
+            clientApi.confirm(
+              "确认删除?",
+              "删除代码片段无法撤销,请确认你是否要删除它",
+              async() => {
+                用户确认结果=true;
+                当前代码片段.snippets.splice(index, 1);
+                element.remove();
+                await 核心api.setSnippet(当前代码片段);
+                window.location.reload();
+      
+              },
+              () => {
+                用户确认结果=false;
+              }
+            );
+            event.stopPropagation();
+
+          }
+
+        )
         element.addEventListener(
           "click",
           (event) => {
+            
             if (event.target.tagName !== "INPUT") {
               return;
             }
@@ -107,7 +133,7 @@ class quickSnippets extends Plugin {
       if (!isMenuClicked(target)) {
         if (JSON.stringify(当前代码片段) !== JSON.stringify(旧代码片段)) {
           await 核心api.setSnippet(当前代码片段);
-          
+
           window.location.reload();
         } else {
           window.removeEventListener("click", cb);
