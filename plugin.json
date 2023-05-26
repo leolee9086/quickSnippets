@@ -12,8 +12,8 @@
     "zh_CN": "这就一个用于快速开关代码片段的插件，如果你不怎么用代码片段可能你就不需要它"
   },
   "readme": {
-    "default": "README_zh_CN.md",
-    "en_US": "README_zh_CN.md",
+    "default": "README.md",
+    "en_US": "README_en_US.md",
     "zh_CN": "README.md"
   },
   "i18n": [
